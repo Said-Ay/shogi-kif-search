@@ -48,3 +48,11 @@ unfixable = [
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+[tool.mypy]
+strict = true
+files = ["src"]
+
+[[tool.mypy.overrides]]
+#型情報のないcshogiだけimportのエラーを無視する
+module = ["cshogi.*"]
+ignore_missing_imports = true

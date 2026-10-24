@@ -1,0 +1,27 @@
+[project]
+name = "shogi-kif-search"
+version = "0.1.0"
+description = "KIF棋譜の読み込み・局面管理・Zobristハッシュによる同一局面検索を担うバックエンドライブラリ"
+readme = "README.md"
+authors = [
+    { name = "Said-Ay", email = "215678380+Said-Ay@users.noreply.github.com" },
+]
+requires-python = "==3.14.*"
+dependencies = [
+    "cshogi>=1.0.9",
+]
+license = "GPL-3.0-only"
+
+[build-system]
+requires = ["uv_build>=0.13.5,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.170.8",
+    "mypy>=2.4.0",
+    "pre-commit>=4.7.0",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.2",
+]

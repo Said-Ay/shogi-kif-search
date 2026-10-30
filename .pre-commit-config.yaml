@@ -1,0 +1,20 @@
+# Copyright (C) 2026 Said-Ay
+# SPDX-License-Identifier: GPL-3.0-only
+
+
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        language: system
+        entry: uv run --project backend ruff check
+        args: [--fix]
+        files: ^backend/(src/|tests/)|^backend/pyproject\.toml$
+        pass_filenames: false
+      - id: ruff-format
+        name: ruff format
+        language: system
+        entry: uv run --project backend ruff format
+        files: ^backend/(src/|tests/)|^backend/pyproject\.toml$
+        pass_filenames: false

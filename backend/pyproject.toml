@@ -69,3 +69,6 @@ ignore_missing_imports = true
 #tests/ の中のファイル同士で import し合うことはできなくなる
 #テスト間で共通の道具が必要になったらtests/conftest.py にfixtureとして書く
 addopts = ["--import-mode=importlib"]
+
+[tool.coverage.run]
+source = ["shogi_kif_search"]

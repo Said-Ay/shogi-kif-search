@@ -128,15 +128,15 @@ wheels = [
 
 [[package]]
 name = "cshogi"
-version = "1.0.9"
+version = "1.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/88/a1/806aca2f44e0715e529445cf380953e759cdd7a1fddaad7cfc7cbfab06bc/cshogi-1.0.9.tar.gz", hash = "sha256:2d9e7ce5e9e4e1373c1384587fe7b8032f0648ad1f5240d81c78dad51641ac97", size = 756481, upload-time = "2026-09-22T01:34:09.087Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d4/57/a9735534c350ce635cd6472aec0123ff7ea5cfd02443b1a8c6fcf87664df/cshogi-1.1.0.tar.gz", hash = "sha256:a04559d641f544ba06d84baaef0877ed8afc08632544cfbc46d9f3e02db98dd8", size = 756435, upload-time = "2026-10-24T03:21:48.766Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0e/22/d039f582c5f98b116777e57b6896cb67035b23bee80703f02d01deeb24ab/cshogi-1.0.9-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e9607d8de5297b2c9fa1f5099c8c86e514fbcb075b367371edd65ef7f2389501", size = 7593912, upload-time = "2026-09-22T01:35:10.38Z" },
-    { url = "https://files.pythonhosted.org/packages/8c/dd/7b81cecb8b98d00c5b8dbfab61ff1a714d167af370e85418545cea255b7f/cshogi-1.0.9-cp314-cp314-win_amd64.whl", hash = "sha256:2bf30c89fc40a88d4f8b27640a374a7437c313c53cd4e4540bc2b4df2733b99c", size = 1002682, upload-time = "2026-09-22T01:34:34.327Z" },
+    { url = "https://files.pythonhosted.org/packages/16/cb/adde4231fcc80fdbb4d6376b478922345f7bf93c5c5ca7b51a2f645254bd/cshogi-1.1.0-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c898f9412635a81434fa8da5b869f394e7929b9fc168a72a93a5c35b48a88098", size = 7602314, upload-time = "2026-10-24T03:22:03.62Z" },
+    { url = "https://files.pythonhosted.org/packages/62/af/b0aa9c70006d1bae8258103e157d9a653dca0788a022bb6b91f858f0f125/cshogi-1.1.0-cp314-cp314-win_amd64.whl", hash = "sha256:c9542354d08301afb9a84ebc4845d04d57156bf5b4f1adff54a33faf03d46736", size = 1001864, upload-time = "2026-10-24T03:21:20.463Z" },
 ]
 
 [[package]]

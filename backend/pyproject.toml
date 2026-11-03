@@ -1,0 +1,74 @@
+[project]
+name = "shogi-kif-search"
+version = "0.1.0"
+description = "KIF棋譜の読み込み・局面管理・Zobristハッシュによる同一局面検索を担うバックエンドライブラリ"
+readme = "README.md"
+authors = [
+    { name = "Said-Ay", email = "215678380+Said-Ay@users.noreply.github.com" },
+]
+requires-python = "==3.14.*"
+dependencies = [
+    "cshogi>=1.0.9",
+]
+license = "GPL-3.0-only"
+
+[build-system]
+requires = ["uv_build>=0.13.5,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.170.8",
+    "mypy>=2.4.0",
+    "pre-commit>=4.7.0",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.2",
+]
+
+[tool.ruff]
+indent-width = 4
+line-length = 110
+
+[tool.ruff.format]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "TD001", #TODOとFIXMEは使い分ける
+    "TD002", #著者はなくてもいい
+    "TD003", #リンクもなくてもいい
+    "COM812", #フォーマッターと衝突するので末尾のコンマは扱わない
+    "D415" #日本語の要約なので末尾指定はなし
+    ]
+unfixable = [
+    "F401" #importを勝手に消さない
+    ]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "INP001",#importlibモードではtest以下には__init__.pyなくていい
+    "S101"  #assertを使う
+    ]
+
+[tool.mypy]
+strict = true
+files = ["src","tests"]
+
+[[tool.mypy.overrides]]
+#型情報のないcshogiだけimportのエラーを無視する
+module = ["cshogi.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+#pytestをimportlibモードにする
+#このときテストからは、普通に from shogi_kif_search import ... と書けば動く
+#tests/ の中のファイル同士で import し合うことはできなくなる
+#テスト間で共通の道具が必要になったらtests/conftest.py にfixtureとして書く
+addopts = ["--import-mode=importlib"]
+
+[tool.coverage.run]
+source = ["shogi_kif_search"]

@@ -1,0 +1,41 @@
+# Copyright (C) 2026 Said-Ay
+# SPDX-License-Identifier: GPL-3.0-only
+
+
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        language: system
+        entry: uv run --project backend ruff check
+        args: [--fix]
+        files: ^backend/(src/|tests/)|^backend/pyproject\.toml$
+        pass_filenames: false
+
+      - id: ruff-format
+        name: ruff format
+        language: system
+        entry: uv run --project backend ruff format
+        files: ^backend/(src/|tests/)|^backend/pyproject\.toml$
+        pass_filenames: false
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace # 行末の不要な空白を自動削除
+        exclude: (?i)\.kifu?$  # KIF/KIFUファイルは除外
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer   # ファイル末尾に改行がない場合、自動で追加
+        exclude: (?i)\.kifu?$  # KIF/KIFUファイルは除外
+      - id: check-yaml          # YAMLファイルの構文チェック
+      - id: check-toml          # TOMLファイルの構文チェック
+      - id: check-added-large-files # 追加された大きなファイルがないかチェック
+  - repo: local
+    hooks:
+      - id: no-kif-outside-testdata
+        name: KIFは backend/tests/data/ にだけ置く
+        language: fail
+        entry: 匿名化したKIFだけを backend/tests/data/ に置いてください
+        files: (?i)\.kifu?$
+        exclude: ^backend/tests/data/

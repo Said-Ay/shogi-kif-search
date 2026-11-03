@@ -218,3 +218,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+#== Custom additions by user ==============
+# Claude Code（個人用の設定）
+CLAUDE.md
+.claude/
+docs

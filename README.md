@@ -1,6 +1,9 @@
 # shogi-kif-search
 同一局面検索ができる将棋棋譜Webアプリ
 
+## 開発
+バックエンド開発環境のつくり方は[backend/README.md](backend/README.md)を参照
+
 ## ライセンス
 
 Copyright (C) 2026 Said-Ay

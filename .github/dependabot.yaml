@@ -1,0 +1,20 @@
+# Dependabot 設定フォーマットVersion
+# 現在 GitHub で使用されているのは version: 2
+version: 2
+
+# 更新監視ルール一覧
+updates:
+    - package-ecosystem: "uv"
+      directory: "/backend/" #監視対象のディレクトリ:バックエンド
+      schedule:
+        interval: "weekly" # 毎週更新チェック
+
+    - package-ecosystem: "github-actions"
+      directory: "/"
+      schedule:
+        interval: "weekly"
+
+    - package-ecosystem: "pre-commit"
+      directory: "/"
+      schedule:
+        interval: "weekly"

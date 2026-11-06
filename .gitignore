@@ -224,3 +224,6 @@ __marimo__/
 CLAUDE.md
 .claude/
 docs
+*.[kK][iI][fF]
+*.[kK][iI][fF][uU]
+!backend/tests/data/**

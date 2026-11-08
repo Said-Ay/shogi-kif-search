@@ -5,7 +5,7 @@
 
 import pytest
 
-from shogi_kif_search.piece import Color, Piece, PieceKind
+from shogi_kif_search.piece import HAND_PIECE_KINDS, Color, Piece, PieceKind
 from shogi_kif_search.position import Position
 
 
@@ -113,3 +113,83 @@ def test_board_copy() -> None:
 
     # Position 内部の盤面は変更されない
     assert position.board[0][0] is None
+
+
+@pytest.mark.parametrize(
+    ("file_num", "rank_num", "expected"),
+    [
+        (2, 2, (1, 7)),
+        (8, 2, (1, 1)),
+        (2, 8, (7, 7)),
+        (9, 1, (0, 0)),
+        (1, 1, (0, 8)),
+        (9, 9, (8, 0)),
+        (1, 9, (8, 8)),
+        (5, 5, (4, 4)),
+    ],
+)
+def test_square_to_index(file_num: int, rank_num: int, expected: tuple[int, int]) -> None:
+    """square_to_index()が将棋の座標を盤面のインデックスに変換することを確認する。"""
+    assert Position.square_to_index(file_num, rank_num) == expected
+
+
+@pytest.mark.parametrize(("file_num", "rank_num"), [(0, 5), (10, 5), (5, 0), (5, 10)])
+def test_square_to_index_out_of_range(file_num: int, rank_num: int) -> None:
+    """筋か段が1〜9の範囲外ならValueErrorになることを確認する。"""
+    with pytest.raises(ValueError, match="不正な座標です。"):
+        Position.square_to_index(file_num, rank_num)
+
+
+def test_initial() -> None:
+    """initial()で初期局面が正しく生成されることを確認する。"""
+    position = Position.initial()
+
+    b = Color.BLACK
+    w = Color.WHITE
+    k = PieceKind
+
+    expected_board = [
+        [
+            Piece(kind, w)
+            for kind in (
+                k.LANCE,
+                k.KNIGHT,
+                k.SILVER,
+                k.GOLD,
+                k.KING,
+                k.GOLD,
+                k.SILVER,
+                k.KNIGHT,
+                k.LANCE,
+            )
+        ],
+        [None, Piece(k.ROOK, w), None, None, None, None, None, Piece(k.BISHOP, w), None],
+        [Piece(k.PAWN, w)] * 9,
+        [None] * 9,
+        [None] * 9,
+        [None] * 9,
+        [Piece(k.PAWN, b)] * 9,
+        [None, Piece(k.BISHOP, b), None, None, None, None, None, Piece(k.ROOK, b), None],
+        [
+            Piece(kind, b)
+            for kind in (
+                k.LANCE,
+                k.KNIGHT,
+                k.SILVER,
+                k.GOLD,
+                k.KING,
+                k.GOLD,
+                k.SILVER,
+                k.KNIGHT,
+                k.LANCE,
+            )
+        ],
+    ]
+
+    assert position.board == expected_board
+    assert position.turn == Color.BLACK
+    assert position.hands == {
+        Color.BLACK: dict.fromkeys(HAND_PIECE_KINDS, 0),
+        Color.WHITE: dict.fromkeys(HAND_PIECE_KINDS, 0),
+    }
+    assert position.move_number == 1

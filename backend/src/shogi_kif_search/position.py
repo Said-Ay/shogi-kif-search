@@ -67,6 +67,27 @@ class Position:
         self.turn = turn
         self.move_number = move_number
 
+    @staticmethod
+    def square_to_index(file_num: int, rank_num: int) -> tuple[int, int]:
+        """将棋の座標を盤面のインデックスに変換する。
+
+        例えば２二は、2筋2段なので `(1, 7)` になる。
+
+        Args:
+            file_num: 筋。1〜9。
+            rank_num: 段。1〜9。
+
+        Returns:
+            盤面の `(行, 列)` のタプル。行は段から、列は筋から決まる。
+
+        Raises:
+            ValueError: 筋または段が1〜9の範囲外の場合。
+        """
+        if not (1 <= rank_num <= BOARD_SIZE) or not (1 <= file_num <= BOARD_SIZE):
+            msg = f"不正な座標です。rank_num: {rank_num}, file_num: {file_num}"
+            raise ValueError(msg)
+        return rank_num - 1, BOARD_SIZE - file_num
+
     @classmethod
     def initial(cls) -> Self:
         """平手の初期局面を作る。
@@ -74,4 +95,46 @@ class Position:
         Returns:
             先手番、手数1、持ち駒なしの平手の初期局面。
         """
-        raise NotImplementedError
+        back_rank = [
+            PieceKind.LANCE,
+            PieceKind.KNIGHT,
+            PieceKind.SILVER,
+            PieceKind.GOLD,
+            PieceKind.KING,
+            PieceKind.GOLD,
+            PieceKind.SILVER,
+            PieceKind.KNIGHT,
+            PieceKind.LANCE,
+        ]
+        board: Sequence[Sequence[Piece | None]] = [
+            [Piece(kind, Color.WHITE) for kind in back_rank],
+            [
+                None,
+                Piece(PieceKind.ROOK, Color.WHITE),
+                None,
+                None,
+                None,
+                None,
+                None,
+                Piece(PieceKind.BISHOP, Color.WHITE),
+                None,
+            ],
+            [Piece(PieceKind.PAWN, Color.WHITE)] * BOARD_SIZE,
+            [None] * BOARD_SIZE,
+            [None] * BOARD_SIZE,
+            [None] * BOARD_SIZE,
+            [Piece(PieceKind.PAWN, Color.BLACK)] * BOARD_SIZE,
+            [
+                None,
+                Piece(PieceKind.BISHOP, Color.BLACK),
+                None,
+                None,
+                None,
+                None,
+                None,
+                Piece(PieceKind.ROOK, Color.BLACK),
+                None,
+            ],
+            [Piece(kind, Color.BLACK) for kind in back_rank],
+        ]
+        return cls(board, hands={}, turn=Color.BLACK, move_number=1)

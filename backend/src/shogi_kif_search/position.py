@@ -5,12 +5,10 @@
 
 from typing import TYPE_CHECKING, Self
 
-from shogi_kif_search.piece import HAND_PIECE_KINDS, Color, Piece, PieceKind
+from shogi_kif_search.piece import BOARD_SIZE, HAND_PIECE_KINDS, Color, Piece, PieceKind
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
-
-BOARD_SIZE = 9
 
 
 class Position:

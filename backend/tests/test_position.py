@@ -5,6 +5,7 @@
 
 import pytest
 
+from shogi_kif_search.move import Square
 from shogi_kif_search.piece import HAND_PIECE_KINDS, Color, Piece, PieceKind
 from shogi_kif_search.position import Position
 
@@ -129,15 +130,8 @@ def test_board_copy() -> None:
     ],
 )
 def test_square_to_index(file_num: int, rank_num: int, expected: tuple[int, int]) -> None:
-    """square_to_index()が将棋の座標を盤面のインデックスに変換することを確認する。"""
-    assert Position.square_to_index(file_num, rank_num) == expected
-
-
-@pytest.mark.parametrize(("file_num", "rank_num"), [(0, 5), (10, 5), (5, 0), (5, 10)])
-def test_square_to_index_out_of_range(file_num: int, rank_num: int) -> None:
-    """筋か段が1〜9の範囲外ならValueErrorになることを確認する。"""
-    with pytest.raises(ValueError, match="不正な座標です。"):
-        Position.square_to_index(file_num, rank_num)
+    """square_to_index()がマス目を盤面のインデックスに変換することを確認する。"""
+    assert Position.square_to_index(Square(file_num, rank_num)) == expected
 
 
 def test_initial() -> None:

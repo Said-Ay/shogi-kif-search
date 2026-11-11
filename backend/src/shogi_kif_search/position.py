@@ -10,6 +10,8 @@ from shogi_kif_search.piece import BOARD_SIZE, HAND_PIECE_KINDS, Color, Piece, P
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
+    from shogi_kif_search.move import Square
+
 
 class Position:
     """局面を表すクラス。盤上の駒、持ち駒、手番、手数を持つ。
@@ -66,25 +68,19 @@ class Position:
         self.move_number = move_number
 
     @staticmethod
-    def square_to_index(file_num: int, rank_num: int) -> tuple[int, int]:
-        """将棋の座標を盤面のインデックスに変換する。
+    def square_to_index(square: Square) -> tuple[int, int]:
+        """マス目を盤面のインデックスに変換する。
 
         例えば２二は、2筋2段なので `(1, 7)` になる。
+        筋と段の範囲は `Square` が確かめるので、ここでは確かめない。
 
         Args:
-            file_num: 筋。1〜9。
-            rank_num: 段。1〜9。
+            square: マス目。
 
         Returns:
             盤面の `(行, 列)` のタプル。行は段から、列は筋から決まる。
-
-        Raises:
-            ValueError: 筋または段が1〜9の範囲外の場合。
         """
-        if not (1 <= rank_num <= BOARD_SIZE) or not (1 <= file_num <= BOARD_SIZE):
-            msg = f"不正な座標です。rank_num: {rank_num}, file_num: {file_num}"
-            raise ValueError(msg)
-        return rank_num - 1, BOARD_SIZE - file_num
+        return square.rank - 1, BOARD_SIZE - square.file
 
     @classmethod
     def initial(cls) -> Self:

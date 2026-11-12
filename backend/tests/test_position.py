@@ -5,9 +5,10 @@
 
 import pytest
 
-from shogi_kif_search.move import Square
+from shogi_kif_search.move import DropMove, Move, NormalMove, Square
 from shogi_kif_search.piece import HAND_PIECE_KINDS, Color, Piece, PieceKind
 from shogi_kif_search.position import Position
+from shogi_kif_search.sfen import to_sfen
 
 
 def test_invalid_board() -> None:
@@ -187,3 +188,185 @@ def test_initial() -> None:
         Color.WHITE: dict.fromkeys(HAND_PIECE_KINDS, 0),
     }
     assert position.move_number == 1
+
+
+def _piece_at(position: Position, square: Square) -> Piece | None:
+    """局面の、指定したマス目にある駒を返す。"""
+    row, col = Position.square_to_index(square)
+    return position.board[row][col]
+
+
+def _position_with(pieces: dict[Square, Piece], hands: dict[Color, dict[PieceKind, int]]) -> Position:
+    """両方の玉と、指定した駒だけを置いた先手番・手数1の局面を作る。
+
+    先手の玉は５九、後手の玉は５一に置く。
+    """
+    board: list[list[Piece | None]] = [[None] * 9 for _ in range(9)]
+    all_pieces = {
+        Square(5, 9): Piece(PieceKind.KING, Color.BLACK),
+        Square(5, 1): Piece(PieceKind.KING, Color.WHITE),
+        **pieces,
+    }
+    for square, piece in all_pieces.items():
+        row, col = Position.square_to_index(square)
+        board[row][col] = piece
+    return Position(board=board, hands=hands, turn=Color.BLACK, move_number=1)
+
+
+def test_push_move() -> None:
+    """駒を動かすと、移動元が空き、移動先に駒が置かれ、手番と手数が進むことを確認する。"""
+    position = Position.initial()
+
+    position.push(NormalMove(from_square=Square(2, 7), to_square=Square(2, 6), promote=False))
+
+    assert _piece_at(position, Square(2, 7)) is None
+    assert _piece_at(position, Square(2, 6)) == Piece(PieceKind.PAWN, Color.BLACK)
+    assert position.turn == Color.WHITE
+    assert position.move_number == 2  # noqa: PLR2004 平手の手数1から1手進めた値
+
+
+def test_push_capture() -> None:
+    """相手の駒を取ると、取った駒が手番側の持ち駒に1枚増えることを確認する。"""
+    position = _position_with(
+        pieces={
+            Square(2, 5): Piece(PieceKind.PAWN, Color.BLACK),
+            Square(2, 4): Piece(PieceKind.PAWN, Color.WHITE),
+        },
+        hands={},
+    )
+
+    position.push(NormalMove(from_square=Square(2, 5), to_square=Square(2, 4), promote=False))
+
+    assert _piece_at(position, Square(2, 5)) is None
+    assert _piece_at(position, Square(2, 4)) == Piece(PieceKind.PAWN, Color.BLACK)
+    assert position.hands[Color.BLACK][PieceKind.PAWN] == 1
+    assert position.hands[Color.WHITE][PieceKind.PAWN] == 0
+
+
+def test_push_promote() -> None:
+    """成る手では、移動先の駒が成った駒になることを確認する。"""
+    position = _position_with(
+        pieces={Square(2, 4): Piece(PieceKind.PAWN, Color.BLACK)},
+        hands={},
+    )
+
+    position.push(NormalMove(from_square=Square(2, 4), to_square=Square(2, 3), promote=True))
+
+    assert _piece_at(position, Square(2, 4)) is None
+    assert _piece_at(position, Square(2, 3)) == Piece(PieceKind.PAWN, Color.BLACK, promoted=True)
+
+
+def test_push_capture_promoted() -> None:
+    """成り駒を取ると、成っていない種類として持ち駒に入ることを確認する。
+
+    先手の銀で後手の龍を取り、先手の持ち駒に飛が1枚増えることを確かめる。
+    """
+    position = _position_with(
+        pieces={
+            Square(2, 4): Piece(PieceKind.SILVER, Color.BLACK),
+            Square(2, 3): Piece(PieceKind.ROOK, Color.WHITE, promoted=True),
+        },
+        hands={},
+    )
+
+    position.push(NormalMove(from_square=Square(2, 4), to_square=Square(2, 3), promote=False))
+
+    assert _piece_at(position, Square(2, 3)) == Piece(PieceKind.SILVER, Color.BLACK)
+    assert position.hands[Color.BLACK][PieceKind.ROOK] == 1
+
+
+def test_push_drop() -> None:
+    """駒を打つと、成っていない駒が置かれ、持ち駒が1枚減ることを確認する。"""
+    position = _position_with(pieces={}, hands={Color.BLACK: {PieceKind.ROOK: 1}})
+
+    position.push(DropMove(square=Square(5, 5), kind=PieceKind.ROOK))
+
+    assert _piece_at(position, Square(5, 5)) == Piece(PieceKind.ROOK, Color.BLACK)
+    assert position.hands[Color.BLACK][PieceKind.ROOK] == 0
+    assert position.turn == Color.WHITE
+    assert position.move_number == 2  # noqa: PLR2004 手数1から1手進めた値
+
+
+# 局面として起こりえない手。どれも先手番で指す
+@pytest.mark.parametrize(
+    ("pieces", "hands", "move", "message"),
+    [
+        pytest.param(
+            {},
+            {},
+            NormalMove(from_square=Square(2, 5), to_square=Square(2, 4), promote=False),
+            "移動元に駒がありません。",
+            id="empty_from_square",
+        ),
+        pytest.param(
+            {Square(2, 4): Piece(PieceKind.PAWN, Color.WHITE)},
+            {},
+            NormalMove(from_square=Square(2, 4), to_square=Square(2, 5), promote=False),
+            "手番側の駒ではありません。",
+            id="move_opponent_piece",
+        ),
+        pytest.param(
+            {
+                Square(2, 5): Piece(PieceKind.PAWN, Color.BLACK),
+                Square(2, 4): Piece(PieceKind.SILVER, Color.BLACK),
+            },
+            {},
+            NormalMove(from_square=Square(2, 5), to_square=Square(2, 4), promote=False),
+            "自分の駒は取れません。",
+            id="capture_own_piece",
+        ),
+        pytest.param(
+            {Square(5, 3): Piece(PieceKind.ROOK, Color.BLACK)},
+            {},
+            NormalMove(from_square=Square(5, 3), to_square=Square(5, 1), promote=False),
+            "玉は取れません。",
+            id="capture_king",
+        ),
+        pytest.param(
+            {Square(2, 4): Piece(PieceKind.PAWN, Color.BLACK, promoted=True)},
+            {},
+            NormalMove(from_square=Square(2, 4), to_square=Square(2, 3), promote=True),
+            "成っている駒は成れません。",
+            id="promote_promoted_piece",
+        ),
+        pytest.param(
+            {
+                Square(2, 4): Piece(PieceKind.PAWN, Color.BLACK, promoted=True),
+                Square(2, 3): Piece(PieceKind.PAWN, Color.WHITE),
+            },
+            {},
+            NormalMove(from_square=Square(2, 4), to_square=Square(2, 3), promote=True),
+            "成っている駒は成れません。",
+            id="capture_and_promote_promoted_piece",
+        ),
+        pytest.param(
+            {},
+            {},
+            DropMove(square=Square(5, 5), kind=PieceKind.PAWN),
+            "持ち駒がありません。",
+            id="drop_without_hand",
+        ),
+        pytest.param(
+            {Square(5, 5): Piece(PieceKind.PAWN, Color.WHITE)},
+            {Color.BLACK: {PieceKind.PAWN: 1}},
+            DropMove(square=Square(5, 5), kind=PieceKind.PAWN),
+            "駒があるマスには打てません。",
+            id="drop_on_occupied_square",
+        ),
+    ],
+)
+def test_push_invalid(
+    pieces: dict[Square, Piece],
+    hands: dict[Color, dict[PieceKind, int]],
+    move: Move,
+    message: str,
+) -> None:
+    """局面として起こりえない手はValueErrorになり、局面が変わらないことを確認する。"""
+    position = _position_with(pieces=pieces, hands=hands)
+    before = to_sfen(position)
+
+    with pytest.raises(ValueError, match=message):
+        position.push(move)
+
+    # 盤面・手番・持ち駒・手数のどれも書き換わっていない
+    assert to_sfen(position) == before

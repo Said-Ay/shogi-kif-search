@@ -5,12 +5,11 @@
 
 from typing import TYPE_CHECKING, Self
 
+from shogi_kif_search.move import DropMove, Move, NormalMove, Square
 from shogi_kif_search.piece import BOARD_SIZE, HAND_PIECE_KINDS, Color, Piece, PieceKind
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
-
-    from shogi_kif_search.move import Square
 
 
 class Position:
@@ -132,3 +131,70 @@ class Position:
             [Piece(kind, Color.BLACK) for kind in back_rank],
         ]
         return cls(board, hands={}, turn=Color.BLACK, move_number=1)
+
+    def push(self, move: Move) -> None:
+        """局面に1手指す。
+
+        局面そのものを書き換え、手番を入れ替えて手数を1増やす。
+        将棋のルール違反は確かめない。
+
+        Args:
+            move: 指す手。
+
+        Raises:
+            ValueError: 局面として起こりえない手の場合。移動元が空きマス、相手の駒を動かす、
+                自分の駒や玉を取る、成り駒をさらに成る、持っていない駒を打つ、駒のあるマスに打つ。
+        """
+        if isinstance(move, NormalMove):
+            self._push_normal(move)
+        else:
+            self._push_drop(move)
+        self.turn = Color.WHITE if self.turn == Color.BLACK else Color.BLACK
+        self.move_number += 1
+
+    def _push_normal(self, move: NormalMove) -> None:
+        """盤上の駒を動かす。相手の駒があれば取って、手番側の持ち駒に加える。"""
+        from_row, from_col = self.square_to_index(move.from_square)
+        to_row, to_col = self.square_to_index(move.to_square)
+
+        piece = self.board[from_row][from_col]
+        if piece is None:
+            msg = f"移動元に駒がありません。from_square: {move.from_square}"
+            raise ValueError(msg)
+
+        if piece.color != self.turn:
+            msg = "手番側の駒ではありません。"
+            raise ValueError(msg)
+
+        captured = self.board[to_row][to_col]
+        if captured is not None:
+            if captured.kind == PieceKind.KING:
+                msg = "玉は取れません。"
+                raise ValueError(msg)
+            if captured.color == self.turn:
+                msg = "自分の駒は取れません。"
+                raise ValueError(msg)
+
+        if move.promote:
+            if piece.promoted:
+                msg = "すでに成っている駒は成れません。"
+                raise ValueError(msg)
+            piece = Piece(piece.kind, piece.color, promoted=True)
+        if captured is not None:
+            # 成り駒を取っても、持ち駒には成っていない種類で入る
+            self.hands[self.turn][captured.kind] += 1
+        self.board[to_row][to_col] = piece
+        self.board[from_row][from_col] = None
+
+    def _push_drop(self, move: DropMove) -> None:
+        """持ち駒を打つ。"""
+        row, col = self.square_to_index(move.square)
+        if self.hands[self.turn][move.kind] <= 0:
+            msg = "持ち駒がありません。"
+            raise ValueError(msg)
+        if self.board[row][col] is not None:
+            msg = "駒があるマスには打てません。"
+            raise ValueError(msg)
+
+        self.board[row][col] = Piece(move.kind, self.turn)
+        self.hands[self.turn][move.kind] -= 1

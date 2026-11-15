@@ -3,12 +3,17 @@
 
 """position.pyのテスト。"""
 
+from pathlib import Path
+
+import cshogi
 import pytest
+from cshogi import KIF
 
 from shogi_kif_search.move import DropMove, Move, NormalMove, Square
 from shogi_kif_search.piece import HAND_PIECE_KINDS, Color, Piece, PieceKind
 from shogi_kif_search.position import Position
 from shogi_kif_search.sfen import to_sfen
+from shogi_kif_search.usi import parse_usi
 
 
 def test_invalid_board() -> None:
@@ -370,3 +375,25 @@ def test_push_invalid(
 
     # 盤面・手番・持ち駒・手数のどれも書き換わっていない
     assert to_sfen(position) == before
+
+
+def test_push_kif_game() -> None:
+    """KIFの全指し手について、適用後のSFENがcshogiと一致することを確認する。"""
+    kif_path = Path(__file__).parent / "data" / "game_001.kif"
+    kif_text = kif_path.read_text(encoding="utf-8")
+    kif = KIF.Parser.parse_str(kif_text)
+    expected_length = 76
+
+    board = cshogi.Board()
+    position = Position.initial()
+
+    assert len(kif.moves) == expected_length, f"指し手の数が{expected_length}ではありません。"
+    assert to_sfen(position) == board.sfen()
+
+    for move_number, move in enumerate(kif.moves, start=1):
+        usi = cshogi.move_to_usi(move)
+
+        board.push(move)
+        position.push(parse_usi(usi))
+
+        assert to_sfen(position) == board.sfen(), f"{move_number}手目({usi})でSFENが一致しません"

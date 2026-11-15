@@ -6,6 +6,9 @@
 import enum
 from dataclasses import dataclass
 
+# 盤の大きさ。筋と段はどちらも1からBOARD_SIZEまで
+BOARD_SIZE = 9
+
 
 class Color(enum.Enum):
     """駒が先手後手どちらのものかを定義するクラス。"""

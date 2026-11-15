@@ -8,6 +8,8 @@ from pathlib import Path
 import cshogi
 import pytest
 from cshogi import KIF
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from shogi_kif_search.move import DropMove, Move, NormalMove, Square
 from shogi_kif_search.piece import HAND_PIECE_KINDS, Color, Piece, PieceKind
@@ -393,6 +395,24 @@ def test_push_kif_game() -> None:
     for move_number, move in enumerate(kif.moves, start=1):
         usi = cshogi.move_to_usi(move)
 
+        board.push(move)
+        position.push(parse_usi(usi))
+
+        assert to_sfen(position) == board.sfen(), f"{move_number}手目({usi})でSFENが一致しません"
+
+
+@settings(max_examples=30, deadline=None)
+@given(st.data())
+def test_push_random(data: st.DataObject) -> None:
+    """ランダムな合法手を指して、適用後のSFENがcshogiと一致することを確認する。"""
+    board = cshogi.Board()
+    position = Position.initial()
+    for move_number in range(1, 71):  # 70手まで
+        legal_moves = list(board.legal_moves)
+        if not legal_moves:
+            break  # 詰み
+        move = data.draw(st.sampled_from(legal_moves))
+        usi = cshogi.move_to_usi(move)
         board.push(move)
         position.push(parse_usi(usi))
 

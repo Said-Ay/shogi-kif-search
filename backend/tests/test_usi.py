@@ -46,7 +46,7 @@ def test_parse_usi_drop_all_kinds(kind: PieceKind) -> None:
         "0a1a",
         "7j7f",
         "7G7F",
-        "７g７f",  # noqa: RUF001 USIの筋は半角数字だけなので全角数字を渡すと ValueErrorになる
+        "７g７f",  # USIの筋は半角数字だけなので全角数字を渡すと ValueErrorになる
         "K*5e",
         "p*5e",
         "P*5",

@@ -3,23 +3,25 @@
 
 """kif.pyのテスト。"""
 
-import re
 from pathlib import Path
 
 import cshogi
 import pytest
 from cshogi import KIF
 
-from shogi_kif_search.kif import parse_kif_move
+from shogi_kif_search.kif import KifGame, parse_kif, parse_kif_move, read_kif
 from shogi_kif_search.move import DropMove, Move, NormalMove, Square
 from shogi_kif_search.piece import PieceKind
 from shogi_kif_search.usi import parse_usi
 
-# 棋譜の指し手の行から、手数の後ろの指し手の部分を取り出す。例: `   9 同　銀(68)   ( 0:00/00:00:06)`
-_MOVE_LINE_PATTERN = re.compile(r"\s*\d+ (\S+(?:　\S+)?)")
+GAME_001 = Path(__file__).parent / "data" / "game_001.kif"
 
-# 指し手の行と同じ形で書かれる終局の言葉
-_END_WORDS = frozenset({"投了", "中断", "千日手", "持将棋", "詰み", "切れ負け", "反則勝ち", "反則負け"})
+# parse_kif のテストで使う、初手から3手の指し手
+_FIRST_MOVES = (
+    NormalMove(Square(2, 7), Square(2, 6), promote=False),
+    NormalMove(Square(8, 3), Square(8, 4), promote=False),
+    NormalMove(Square(2, 6), Square(2, 5), promote=False),
+)
 
 
 @pytest.mark.parametrize(
@@ -58,26 +60,69 @@ def test_parse_kif_move_same(text: str) -> None:
     assert parse_kif_move(text, previous_to=Square(2, 4)) == expected
 
 
-def test_parse_kif_game() -> None:
-    """棋譜の全指し手が、cshogiの読んだ指し手と一致することを確認する。"""
-    kif_text = (Path(__file__).parent / "data" / "game_001.kif").read_text(encoding="utf-8")
-    expected_moves = [parse_usi(cshogi.move_to_usi(move)) for move in KIF.Parser.parse_str(kif_text).moves]
-    # 指し手の行は「手数 指し手 (消費時間)」の形。投了などの終局の行は指し手ではないので除く
-    texts = [
-        match.group(1)
-        for line in kif_text.splitlines()
-        if (match := _MOVE_LINE_PATTERN.match(line)) and match.group(1) not in _END_WORDS
-    ]
+def test_read_kif_game() -> None:
+    """棋譜ファイルの全指し手が、cshogiの読んだ指し手と一致することを確認する。
 
-    moves: list[Move] = []
-    previous_to: Square | None = None
-    for text in texts:
-        move = parse_kif_move(text, previous_to)
-        moves.append(move)
-        previous_to = move.to_square if isinstance(move, NormalMove) else move.square
+    ヘッダーの未知の行は読み捨て、投了の行とその後ろの行は指し手にならない。
+    """
+    kif_text = GAME_001.read_text(encoding="utf-8")
+    expected_moves = tuple(
+        parse_usi(cshogi.move_to_usi(move)) for move in KIF.Parser.parse_str(kif_text).moves
+    )
 
-    assert len(moves) == len(expected_moves) == 76  # noqa: PLR2004 棋譜の手数
-    assert moves == expected_moves
+    game = read_kif(GAME_001)
+
+    assert len(game.moves) == 76  # noqa: PLR2004 棋譜の手数
+    assert game == KifGame(handicap="平手", moves=expected_moves)
+
+
+@pytest.mark.parametrize("encoding", ["utf-8-sig", "cp932"])
+def test_read_kif_encoding(tmp_path: Path, encoding: str) -> None:
+    """BOM付きのUTF-8とcp932の棋譜ファイルも、UTF-8と同じ内容に読めることを確認する。"""
+    path = tmp_path / "game.kif"
+    path.write_bytes(GAME_001.read_text(encoding="utf-8").encode(encoding))
+    assert read_kif(path) == read_kif(GAME_001)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        pytest.param(
+            "手合割：平手\n手数----指手--\n1 ２六歩(27)\n2 ８四歩(83)\n3 ２五歩(26)\n4 中断\n5 ７六歩(77)\n",
+            id="end_line",
+        ),
+        pytest.param(
+            "1 ２六歩(27)\n2 ８四歩(83)\n3 ２五歩(26)+\n\n変化：3手\n3 ７六歩(77)\n",
+            id="variation_without_end_line",
+        ),
+        pytest.param(
+            "# コメント\n先手段級：初段\n1 ２六歩(27)\n*指し手のコメント\n2 ８四歩(83)\n3 ２五歩(26)\n",
+            id="comment_and_unknown_header",
+        ),
+    ],
+)
+def test_parse_kif(text: str) -> None:
+    """終局の行か変化の行で止まり、コメントと未知のヘッダーを読み捨てることを確認する。
+
+    手合割を省略した棋譜は平手として読む。
+    """
+    assert parse_kif(text) == KifGame(handicap="平手", moves=_FIRST_MOVES)
+
+
+@pytest.mark.parametrize(
+    ("text", "message"),
+    [
+        ("1 ２六歩(27)\n3 ８四歩(83)\n", "2行目: 手数が2ではありません。"),
+        ("手合割：香落ち\n", "1行目: 平手以外の手合割には対応していません。"),
+        ("1 ２六歩(27)\n&しおり\n", "2行目: しおりには対応していません。"),
+        ("1 ２六歩(27)\nまで1手\n", "2行目: KIF形式の行として読めません。"),
+        ("1 同　歩(23)\n", "1行目: 直前の指し手がないので「同」を解釈できません。"),
+    ],
+)
+def test_parse_kif_invalid(text: str, message: str) -> None:
+    """手数の欠け、平手以外の手合割、しおり、どの形式にも当てはまらない行、読めない指し手はValueErrorになることを確認する。"""
+    with pytest.raises(ValueError, match=message):
+        parse_kif(text)
 
 
 @pytest.mark.parametrize(

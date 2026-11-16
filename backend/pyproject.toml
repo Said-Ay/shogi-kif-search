@@ -44,6 +44,8 @@ ignore = [
 unfixable = [
     "F401" #importを勝手に消さない
     ]
+#KIFは筋を全角数字で書くので、全角の１から９はまぎらわしい文字として扱わない
+allowed-confusables = ["１", "２", "３", "４", "５", "６", "７", "８", "９"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

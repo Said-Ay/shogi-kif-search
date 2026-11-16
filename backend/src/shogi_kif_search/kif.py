@@ -27,36 +27,47 @@ _DROP_PIECE_KINDS = {
     "飛": PieceKind.ROOK,
 }
 
-# 盤上の駒を動かす手。例: ７六歩(77)、２二角成(88)、２二成銀(31)
-_NORMAL_MOVE_PATTERN = re.compile(rf"([{_FILES}])([{_RANKS}])(?:{_BOARD_PIECE_NAMES})(成?)\(([1-9])([1-9])\)")
+# 盤上の駒を動かす手。例: ７六歩(77)、２二角成(88)、２二成銀(31)、同　歩(23)
+# 移動先は、マス目か、直前の指し手と同じマスを表す「同」で書く。「同」の後の全角空白はないこともある
+_NORMAL_MOVE_PATTERN = re.compile(
+    rf"(?:([{_FILES}])([{_RANKS}])|同　?)(?:{_BOARD_PIECE_NAMES})(成?)\(([1-9])([1-9])\)"
+)
 
 # 持ち駒を打つ手。例: ５五角打
 _DROP_MOVE_PATTERN = re.compile(rf"([{_FILES}])([{_RANKS}])({'|'.join(_DROP_PIECE_KINDS)})打")
 
 
-def parse_kif_move(text: str) -> Move:
+def parse_kif_move(text: str, previous_to: Square | None = None) -> Move:
     """KIF形式の指し手の部分を、指し手の型に変換する。
 
     手数や消費時間を含まない、指し手の部分だけを受け取る。
     駒の名前の後ろに「成」があれば成る手とし、成銀などの駒の名前に含まれる「成」とは区別する。
     盤上の駒を動かす手では、駒の名前は確かめるだけで残さず、盤面の駒と一致するかも確かめない。
-    「同」は扱わない。
+    「同」は、直前の指し手の移動先を移動先とする。
 
     Args:
-        text: KIF形式の指し手の部分。例えば `７六歩(77)`、`２二角成(88)`、`５五角打`。
+        text: KIF形式の指し手の部分。例えば `７六歩(77)`、`２二角成(88)`、`５五角打`、`同　歩(23)`。
+        previous_to: 直前の指し手の移動先。「同」を解釈するときだけ使う。初手では `None`。
 
     Returns:
         盤上の駒を動かす手なら `NormalMove`、持ち駒を打つ手なら `DropMove`。
 
     Raises:
         ValueError: KIF形式の指し手として読めない場合、`不成` と書かれている場合、
-            または移動元と移動先が同じ場合。
+            直前の指し手がないのに「同」と書かれている場合、または移動元と移動先が同じ場合。
     """
     if normal := _NORMAL_MOVE_PATTERN.fullmatch(text):
         to_file, to_rank, promote, from_file, from_rank = normal.groups()
+        if to_file is not None:
+            to_square = _parse_square(to_file, to_rank)
+        elif previous_to is not None:
+            to_square = previous_to
+        else:
+            msg = f"直前の指し手がないので「同」を解釈できません。text: {text!r}"
+            raise ValueError(msg)
         return NormalMove(
             from_square=Square(file=int(from_file), rank=int(from_rank)),
-            to_square=_parse_square(to_file, to_rank),
+            to_square=to_square,
             promote=promote == "成",
         )
     if drop := _DROP_MOVE_PATTERN.fullmatch(text):

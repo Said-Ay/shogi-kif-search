@@ -42,14 +42,18 @@ def iter_positions(game: KifGame) -> Iterator[PositionRecord]:
         初期局面から最後の指し手の後の局面まで、1局面ずつの記録。
 
     Raises:
-        ValueError: 局面として起こりえない指し手がある場合。
+        ValueError: 局面として起こりえない指し手がある場合。メッセージの先頭に何手目かを付ける。
     """
     position = Position.initial()
     hash_value = calculate_hash(position)
     yield _record(position, hash_value)
-    for move in game.moves:
-        new_hash = update_hash(hash_value, position, move)
-        position.push(move)
+    for move_number, move in enumerate(game.moves, start=1):
+        try:
+            new_hash = update_hash(hash_value, position, move)
+            position.push(move)
+        except ValueError as error:
+            msg = f"{move_number}手目: {error}"
+            raise ValueError(msg) from error
         hash_value = new_hash
         yield _record(position, hash_value)
 

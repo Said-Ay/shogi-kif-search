@@ -3,7 +3,7 @@
 
 """kif.pyのテスト。"""
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import cshogi
 import pytest
@@ -14,9 +14,10 @@ from shogi_kif_search.move import DropMove, Move, NormalMove, Square
 from shogi_kif_search.piece import PieceKind
 from shogi_kif_search.usi import parse_usi
 
-GAME_001 = Path(__file__).parent / "data" / "game_001.kif"
+if TYPE_CHECKING:
+    from pathlib import Path
 
-# parse_kif のテストで使う、初手から3手の指し手
+# parse_kif のテストで使う初手から3手の指し手
 _FIRST_MOVES = (
     NormalMove(Square(2, 7), Square(2, 6), promote=False),
     NormalMove(Square(8, 3), Square(8, 4), promote=False),
@@ -60,28 +61,28 @@ def test_parse_kif_move_same(text: str) -> None:
     assert parse_kif_move(text, previous_to=Square(2, 4)) == expected
 
 
-def test_read_kif_game() -> None:
+def test_read_kif_game(game_001_path: Path) -> None:
     """棋譜ファイルの全指し手が、cshogiの読んだ指し手と一致することを確認する。
 
     ヘッダーの未知の行は読み捨て、投了の行とその後ろの行は指し手にならない。
     """
-    kif_text = GAME_001.read_text(encoding="utf-8")
+    kif_text = game_001_path.read_text(encoding="utf-8")
     expected_moves = tuple(
         parse_usi(cshogi.move_to_usi(move)) for move in KIF.Parser.parse_str(kif_text).moves
     )
 
-    game = read_kif(GAME_001)
+    game = read_kif(game_001_path)
 
     assert len(game.moves) == 76  # noqa: PLR2004 棋譜の手数
     assert game == KifGame(handicap="平手", moves=expected_moves)
 
 
 @pytest.mark.parametrize("encoding", ["utf-8-sig", "cp932"])
-def test_read_kif_encoding(tmp_path: Path, encoding: str) -> None:
+def test_read_kif_encoding(tmp_path: Path, game_001_path: Path, encoding: str) -> None:
     """BOM付きのUTF-8とcp932の棋譜ファイルも、UTF-8と同じ内容に読めることを確認する。"""
     path = tmp_path / "game.kif"
-    path.write_bytes(GAME_001.read_text(encoding="utf-8").encode(encoding))
-    assert read_kif(path) == read_kif(GAME_001)
+    path.write_bytes(game_001_path.read_text(encoding="utf-8").encode(encoding))
+    assert read_kif(path) == read_kif(game_001_path)
 
 
 @pytest.mark.parametrize(

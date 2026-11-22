@@ -3,23 +3,22 @@
 
 """cli.pyのテスト。"""
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from shogi_kif_search.cli import main
 
 if TYPE_CHECKING:
-    import pytest
+    from pathlib import Path
 
-GAME_001 = Path(__file__).parent / "data" / "game_001.kif"
+    import pytest
 
 # 見出しの1行と初期局面から76手目までの77局面
 EXPECTED_LINES = 78
 
 
-def test_main(capsys: pytest.CaptureFixture[str]) -> None:
+def test_main(game_001_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     """棋譜の全局面を、見出し付きのTSVで1局面1行ずつ出力することを確認する。"""
-    assert main([str(GAME_001)]) == 0
+    assert main([str(game_001_path)]) == 0
 
     lines = capsys.readouterr().out.splitlines()
     assert len(lines) == EXPECTED_LINES

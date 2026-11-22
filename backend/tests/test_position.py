@@ -80,8 +80,9 @@ def test_constructor_copies_and_fills_hands() -> None:
     [(Square(9, 1), (0, 0)), (Square(2, 2), (1, 7)), (Square(1, 9), (8, 8))],
 )
 def test_square_to_index(square: Square, expected: tuple[int, int]) -> None:
-    """マス目が盤面の行と列に変換されることを確認する。"""
+    """マス目が盤面の行と列に変換され、行と列からマス目に戻せることを確認する。"""
     assert Position.square_to_index(square) == expected
+    assert Position.index_to_square(*expected) == square
 
 
 # 局面として起こりえない手。どれも先手番で指す

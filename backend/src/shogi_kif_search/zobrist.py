@@ -7,7 +7,7 @@ import hashlib
 from typing import TYPE_CHECKING
 
 from shogi_kif_search.move import NormalMove, Square
-from shogi_kif_search.piece import BOARD_SIZE, Color, Piece, PieceKind
+from shogi_kif_search.piece import Color, Piece, PieceKind
 
 if TYPE_CHECKING:
     from shogi_kif_search.move import Move
@@ -24,7 +24,7 @@ def _piece_code(piece: Piece) -> str:
     """駒をSFEN形式の文字列に変換する。"""
     code = piece.kind.value
 
-    if piece.color == Color.WHITE:
+    if piece.color is Color.WHITE:
         code = code.lower()
 
     if piece.promoted:
@@ -80,14 +80,14 @@ def calculate_hash(position: Position) -> int:
             if piece is None:
                 continue
 
-            square = Square(file=BOARD_SIZE - x, rank=y + 1)
+            square = position.index_to_square(y, x)
             hash_value ^= _board_key(piece, square)
 
     for color, hand in position.hands.items():
         for kind, count in hand.items():
             hash_value ^= _hand_key(kind, color, count)
 
-    if position.turn == Color.WHITE:
+    if position.turn is Color.WHITE:
         hash_value ^= _TURN_KEY
 
     return hash_value

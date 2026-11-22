@@ -3,17 +3,18 @@
 
 """game.pyのテスト。"""
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from shogi_kif_search.game import iter_positions
 from shogi_kif_search.kif import read_kif
 
-GAME_001 = Path(__file__).parent / "data" / "game_001.kif"
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
-def test_iter_positions() -> None:
+def test_iter_positions(game_001_path: Path) -> None:
     """テスト棋譜から局面を全部取り出せることを確認する。"""
-    game = read_kif(GAME_001)
+    game = read_kif(game_001_path)
     positions = list(iter_positions(game))
     game_position_len = 77
     assert len(positions) == game_position_len

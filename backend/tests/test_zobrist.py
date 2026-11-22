@@ -16,6 +16,8 @@ from shogi_kif_search.zobrist import calculate_hash, update_hash
 INITIAL_POSITION_HASH = 0x216B53C6C9D64459
 EXPECTED_HAND_HASH = 0x71295E06A1E9BBF1
 
+MAX_RANDOM_MOVES = 100
+
 
 @settings(max_examples=30, deadline=None)
 @given(st.data())
@@ -26,7 +28,7 @@ def test_update_hash_matches_calculate_hash(data: st.DataObject) -> None:
 
     hash_value = calculate_hash(position)
 
-    for _ in range(100):
+    for _ in range(MAX_RANDOM_MOVES):
         legal_moves = list(board.legal_moves)
 
         if not legal_moves:
@@ -52,7 +54,7 @@ def test_initial_hash() -> None:
 
 def test_hand_hash() -> None:
     """持ち駒を含む局面のハッシュ値が固定値と一致することを確認する。"""
-    board: list[list[Piece | None]] = [[None for _ in range(9)] for _ in range(BOARD_SIZE)]
+    board: list[list[Piece | None]] = [[None] * BOARD_SIZE for _ in range(BOARD_SIZE)]
 
     board[0][4] = Piece(PieceKind.KING, Color.WHITE)
     board[8][4] = Piece(PieceKind.KING, Color.BLACK)

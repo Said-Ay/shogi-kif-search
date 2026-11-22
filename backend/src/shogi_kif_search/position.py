@@ -112,6 +112,19 @@ class Position:
         """
         return square.rank - 1, BOARD_SIZE - square.file
 
+    @staticmethod
+    def index_to_square(row: int, col: int) -> Square:
+        """盤面の `(行, 列)` をマス目に変換する。`square_to_index` の逆。
+
+        Args:
+            row: 盤面の行。0 が一段目。
+            col: 盤面の列。0 が9筋。
+
+        Returns:
+            マス目。
+        """
+        return Square(file=BOARD_SIZE - col, rank=row + 1)
+
     def push(self, move: Move) -> None:
         """局面に1手指す。
 

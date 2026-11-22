@@ -26,13 +26,13 @@ def to_sfen(position: Position) -> str:
         SFEN形式の文字列。例えば平手の初期局面なら
         `lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1`。
     """
-    turn = "b" if position.turn == Color.BLACK else "w"
+    turn = "b" if position.turn is Color.BLACK else "w"
     return f"{_board_to_sfen(position.board)} {turn} {_hands_to_sfen(position.hands)} {position.move_number}"
 
 
 def _letter(kind: PieceKind, color: Color) -> str:
     """駒の種類を表す1文字。先手は大文字、後手は小文字にする。"""
-    return kind.value if color == Color.BLACK else kind.value.lower()
+    return kind.value if color is Color.BLACK else kind.value.lower()
 
 
 def _piece_to_sfen(piece: Piece) -> str:

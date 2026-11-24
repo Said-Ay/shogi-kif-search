@@ -9,7 +9,7 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from shogi_kif_search.move import DropMove, Move, NormalMove, Square
-from shogi_kif_search.piece import Color, Piece, PieceKind
+from shogi_kif_search.piece import BOARD_SIZE, Color, Piece, PieceKind
 from shogi_kif_search.position import Position
 from shogi_kif_search.sfen import to_sfen
 from shogi_kif_search.usi import parse_usi
@@ -20,7 +20,7 @@ MAX_RANDOM_MOVES = 70
 
 def _empty_board() -> list[list[Piece | None]]:
     """駒のない9行9列の盤面を作る。"""
-    return [[None] * 9 for _ in range(9)]
+    return [[None] * BOARD_SIZE for _ in range(BOARD_SIZE)]
 
 
 def _position_with(pieces: dict[Square, Piece], hands: dict[Color, dict[PieceKind, int]]) -> Position:

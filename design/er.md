@@ -13,14 +13,14 @@ users{
     text display_name "アプリの中で使う表示名"
 }
 games{
-    bigint game_id PK
+    uuid game_id PK "UUID v4"
     bigint user_id FK
-    text my_side "手番"
-    text result "自分から見た勝敗"
+    text my_side "自分の手番(black か white)"
+    text result "盤上の結果(black_win、white_win、draw、unknown)"
     timestamptz created_at
 }
 moves{
-    bigint game_id PK, FK
+    uuid game_id PK, FK
     integer move_number PK "1から"
     text move "USI形式"
     integer time_seconds "消費時間"
@@ -52,6 +52,10 @@ analysis{
 
 - `analysis` を `positions` と分けるのは解析結果がエンジン・評価関数・探索の条件にも左右されるため
 - 平手しか扱わないので、`games` に手合割の列は持たない
+- `games.game_id` は UUID v4 にする。連番だと推測しやすく、認可の漏れがあったときに他人の対局を順に読まれやすい
+- `games.result` は自分から見た勝ち負けではなく盤上の結果にする。勝ち負けは `my_side` と組み合わせて出せるので、同じ事実を2か所に持たずに済む。中断や終局の行がない棋譜は `unknown`
+- 手数は `moves` から数えられるので、`games` に列を持たない
+- 初期局面はどの対局でも同じなので、`moves` に0手目の行は作らない
 
 ## ハッシュの型について
 

@@ -156,13 +156,13 @@ class Position:
         if piece is None:
             msg = f"移動元に駒がありません。from_square: {move.from_square}"
             raise ValueError(msg)
-        if piece.color != self.turn:
+        if piece.color is not self.turn:
             msg = f"手番側の駒ではありません。from_square: {move.from_square}"
             raise ValueError(msg)
-        if captured is not None and captured.kind == PieceKind.KING:
+        if captured is not None and captured.kind is PieceKind.KING:
             msg = f"玉は取れません。to_square: {move.to_square}"
             raise ValueError(msg)
-        if captured is not None and captured.color == self.turn:
+        if captured is not None and captured.color is self.turn:
             msg = f"自分の駒は取れません。to_square: {move.to_square}"
             raise ValueError(msg)
         if move.promote and piece.promoted:

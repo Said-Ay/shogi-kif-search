@@ -66,7 +66,7 @@ class DropMove:
         Raises:
             ValueError: 玉を打つ場合。
         """
-        if self.kind == PieceKind.KING:
+        if self.kind is PieceKind.KING:
             msg = "玉は打てません。"
             raise ValueError(msg)
 

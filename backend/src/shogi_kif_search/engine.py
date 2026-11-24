@@ -40,6 +40,14 @@ class EngineAnalysis:
 
 NODES = 1_000_000
 
+# 起動したときに設定するオプション
+_OPTIONS = {
+    "Threads": "1",
+    "USI_OwnBook": "false",
+    "FV_SCALE": "24",
+    "USI_Hash": "256",
+}
+
 # 最善手や読み筋に現れるが、指し手ではない言葉
 _NON_MOVES = frozenset({"resign", "win"})
 
@@ -58,10 +66,8 @@ class UsiEngine:
     def __enter__(self) -> Self:
         """エンジンを起動。"""
         self._engine = Engine(str(self.path))
-        self._engine.setoption("Threads", "1")
-        self._engine.setoption("USI_OwnBook", "false")
-        self._engine.setoption("FV_SCALE", "24")
-        self._engine.setoption("USI_Hash", "256")
+        for name, value in _OPTIONS.items():
+            self._engine.setoption(name, value)
         self._engine.isready()
         return self
 

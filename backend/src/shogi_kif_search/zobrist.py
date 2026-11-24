@@ -54,12 +54,7 @@ def _hand_key(kind: PieceKind, color: Color, count: int) -> int:
     if count == 0:
         return 0
 
-    piece = Piece(
-        kind=kind,
-        color=color,
-        promoted=False,
-    )
-    piece_code = _piece_code(piece)
+    piece_code = _piece_code(Piece(kind, color))
 
     return _make_key(f"zobrist-v1|hand|{piece_code}|{count}")
 
@@ -128,11 +123,7 @@ def update_hash(old_hash: int, position: Position, move: Move) -> int:
             hash_value ^= _hand_key(kind, color, count + 1)
 
         if move.promote:
-            moved_piece = Piece(
-                kind=moved_piece.kind,
-                color=moved_piece.color,
-                promoted=True,
-            )
+            moved_piece = Piece(moved_piece.kind, moved_piece.color, promoted=True)
 
         hash_value ^= _board_key(moved_piece, move.to_square)
 
@@ -148,12 +139,7 @@ def update_hash(old_hash: int, position: Position, move: Move) -> int:
         hash_value ^= _hand_key(kind, color, count)
         hash_value ^= _hand_key(kind, color, count - 1)
 
-        dropped_piece = Piece(
-            kind=kind,
-            color=color,
-            promoted=False,
-        )
-        hash_value ^= _board_key(dropped_piece, move.square)
+        hash_value ^= _board_key(Piece(kind, color), move.square)
 
     hash_value ^= _TURN_KEY
 

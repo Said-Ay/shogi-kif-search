@@ -8,7 +8,10 @@ authors = [
 ]
 requires-python = "==3.14.*"
 dependencies = [
+    "alembic>=1.20.1",
     "cshogi>=1.0.9",
+    "psycopg[binary]>=3.3.9",
+    "sqlalchemy>=2.1.9",
 ]
 license = "GPL-3.0-only"
 
@@ -50,10 +53,20 @@ allowed-confusables = ["１", "２", "３", "４", "５", "６", "７", "８", "
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+[tool.ruff.lint.flake8-type-checking]
+#SQLAlchemyはモデルの型注釈を実行時に読むので、注釈で使う型のimportをTYPE_CHECKINGに移さない
+runtime-evaluated-base-classes = ["shogi_kif_search.db.Base"]
+
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = [
     "INP001",#importlibモードではtest以下には__init__.pyなくていい
     "S101"  #assertを使う
+    ]
+#Alembicが生成するひな形とマイグレーションのファイル
+"alembic/**" = [
+    "INP001",#Alembicのフォルダはパッケージではない
+    "D100", #生成されるファイルにモジュールのdocstringはない
+    "ERA001" #生成されたコメントの使い方の例を残す
     ]
 
 [tool.mypy]

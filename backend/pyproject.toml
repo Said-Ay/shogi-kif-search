@@ -62,6 +62,12 @@ runtime-evaluated-base-classes = ["shogi_kif_search.db.Base"]
     "INP001",#importlibモードではtest以下には__init__.pyなくていい
     "S101"  #assertを使う
     ]
+#Alembicが生成するひな形とマイグレーションのファイル
+"alembic/**" = [
+    "INP001",#Alembicのフォルダはパッケージではない
+    "D100", #生成されるファイルにモジュールのdocstringはない
+    "ERA001" #生成されたコメントの使い方の例を残す
+    ]
 
 [tool.mypy]
 strict = true

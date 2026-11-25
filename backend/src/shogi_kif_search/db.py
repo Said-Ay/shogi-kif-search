@@ -121,7 +121,9 @@ class Move(Base):
     move_number: Mapped[int] = mapped_column(primary_key=True)
     move: Mapped[str]
     time_seconds: Mapped[int | None]
-    position_hash: Mapped[int] = mapped_column(PositionHash, ForeignKey("positions.position_hash"))
+    position_hash: Mapped[int] = mapped_column(
+        PositionHash, ForeignKey("positions.position_hash"), index=True
+    )
 
 
 class Position(Base):

@@ -7,12 +7,14 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, override
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, func
+from sqlalchemy import BigInteger, DateTime, ForeignKey, func, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.types import TypeDecorator
 
 if TYPE_CHECKING:
     from sqlalchemy.engine import Dialect
+    from sqlalchemy.orm import Session
 
 
 # 64ビットの最上位のビット=2^63
@@ -133,3 +135,25 @@ class Position(Base):
 
     position_hash: Mapped[int] = mapped_column(PositionHash, primary_key=True)
     sfen: Mapped[str]
+
+
+def get_or_create_user(session: Session, tailscale_login: str) -> User:
+    """Tailscaleのアカウントに対応するユーザーを取り出す。まだいなければ作る。
+
+    表示名は、最初はTailscaleのアカウントと同じにする。コミットは呼び出し側で行う。
+
+    Args:
+        session: DBのセッション。
+        tailscale_login: Tailscaleのアカウント。
+
+    Returns:
+        ユーザー。
+    """
+    # 同時に2つのリクエストが来ても行が1つになるように、すでにあれば何もしないINSERTにする
+    statement = (
+        insert(User)
+        .values(tailscale_login=tailscale_login, display_name=tailscale_login)
+        .on_conflict_do_nothing(index_elements=[User.tailscale_login])
+    )
+    session.execute(statement)
+    return session.execute(select(User).where(User.tailscale_login == tailscale_login)).scalar_one()

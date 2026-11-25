@@ -1,7 +1,7 @@
 # Copyright (C) 2026 Said-Ay
 # SPDX-License-Identifier: GPL-3.0-only
 
-"""USI形式の指し手の文字列を、指し手の型に変換する。"""
+"""USI形式の指し手の文字列と、指し手の型を相互に変換する。"""
 
 import re
 
@@ -45,6 +45,26 @@ def parse_usi(text: str) -> Move:
         return DropMove(square=_parse_square(to_file, to_rank), kind=PieceKind(kind))
     msg = f"USI形式の指し手として読めません。text: {text!r}"
     raise ValueError(msg)
+
+
+def to_usi(move: Move) -> str:
+    """指し手の型を、USI形式の指し手の文字列に変換する。`parse_usi` の逆。
+
+    Args:
+        move: 指し手。
+
+    Returns:
+        USI形式の指し手。例えば `7g7f`、`8h2b+`、`P*5e`。
+    """
+    if isinstance(move, NormalMove):
+        promote = "+" if move.promote else ""
+        return f"{_square_to_usi(move.from_square)}{_square_to_usi(move.to_square)}{promote}"
+    return f"{move.kind.value}*{_square_to_usi(move.square)}"
+
+
+def _square_to_usi(square: Square) -> str:
+    """マス目を、USIの筋の数字と段のアルファベットに変換する。"""
+    return f"{square.file}{_RANKS[square.rank - 1]}"
 
 
 def _parse_square(file_char: str, rank_char: str) -> Square:

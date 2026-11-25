@@ -3,13 +3,17 @@
 
 """PostgreSQLに保存するためのテーブルと型を定義する。"""
 
+import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING, override
 
-from sqlalchemy import BigInteger
+from sqlalchemy import BigInteger, DateTime, ForeignKey, func
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.types import TypeDecorator
 
 if TYPE_CHECKING:
     from sqlalchemy.engine import Dialect
+
 
 # 64ビットの最上位のビット=2^63
 UINT64_SIGN_BIT = 1 << 63
@@ -80,3 +84,50 @@ class PositionHash(TypeDecorator[int]):
             msg = "値の型が不正です。intである必要があります。"
             raise TypeError(msg)
         return to_unsigned(value)
+
+
+class Base(DeclarativeBase):
+    """SQLAlchemyのベースクラス。"""
+
+
+class User(Base):
+    """ユーザー情報のテーブル。"""
+
+    __tablename__ = "users"
+
+    user_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    tailscale_login: Mapped[str] = mapped_column(unique=True)
+    display_name: Mapped[str]
+
+
+class Game(Base):
+    """対局情報のテーブル。"""
+
+    __tablename__ = "games"
+
+    game_id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.user_id"))
+    my_side: Mapped[str]
+    result: Mapped[str]
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Move(Base):
+    """指し手情報のテーブル。"""
+
+    __tablename__ = "moves"
+
+    game_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("games.game_id"), primary_key=True)
+    move_number: Mapped[int] = mapped_column(primary_key=True)
+    move: Mapped[str]
+    time_seconds: Mapped[int | None]
+    position_hash: Mapped[int] = mapped_column(PositionHash, ForeignKey("positions.position_hash"))
+
+
+class Position(Base):
+    """局面情報のテーブル。"""
+
+    __tablename__ = "positions"
+
+    position_hash: Mapped[int] = mapped_column(PositionHash, primary_key=True)
+    sfen: Mapped[str]

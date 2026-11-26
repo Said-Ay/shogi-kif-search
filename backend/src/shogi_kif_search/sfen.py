@@ -14,6 +14,10 @@ if TYPE_CHECKING:
     from shogi_kif_search.position import Position
 
 
+# SFENを空白で区切った部分の数。盤面、手番、持ち駒、手数
+_SFEN_PARTS = 4
+
+
 def to_sfen(position: Position) -> str:
     """局面をSFEN形式の文字列に変換する。
 
@@ -28,6 +32,24 @@ def to_sfen(position: Position) -> str:
     """
     turn = "b" if position.turn is Color.BLACK else "w"
     return f"{_board_to_sfen(position.board)} {turn} {_hands_to_sfen(position.hands)} {position.move_number}"
+
+
+def strip_move_number(sfen: str) -> str:
+    """SFEN形式の文字列から、最後の手数を除く。
+
+    手数だけが違う局面を同じ局面として扱うために使う。
+
+    Args:
+        sfen: 盤面、手番、持ち駒、手数の4つを空白でつないだSFEN形式の文字列。
+
+    Returns:
+        盤面、手番、持ち駒の3つを空白でつないだ文字列。
+    """
+    parts = sfen.split(" ")
+    if len(parts) != _SFEN_PARTS:
+        msg = f"SFENは盤面・手番・持ち駒・手数の{_SFEN_PARTS}つを空白でつなぎます。sfen: {sfen!r}"
+        raise ValueError(msg)
+    return " ".join(parts[:-1])
 
 
 def _letter(kind: PieceKind, color: Color) -> str:

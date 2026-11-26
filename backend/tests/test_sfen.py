@@ -11,7 +11,7 @@ import pytest
 
 from shogi_kif_search.piece import BOARD_SIZE, Color, PieceKind
 from shogi_kif_search.position import Position
-from shogi_kif_search.sfen import to_sfen
+from shogi_kif_search.sfen import strip_move_number, to_sfen
 
 
 def test_initial_sfen() -> None:
@@ -38,3 +38,15 @@ def test_hands_sfen(hands: dict[Color, dict[PieceKind, int]], expected: str) -> 
         board=[[None] * BOARD_SIZE for _ in range(BOARD_SIZE)], hands=hands, turn=Color.BLACK, move_number=1
     )
     assert to_sfen(position).split()[2] == expected
+
+
+def test_strip_move_number() -> None:
+    """SFENから手数だけが除かれることを確認する。"""
+    sfen = "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1"
+    assert strip_move_number(sfen) == "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b -"
+
+
+def test_strip_move_number_invalid() -> None:
+    """手数がないSFENはValueErrorになることを確認する。"""
+    with pytest.raises(ValueError, match="SFENは盤面・手番・持ち駒・手数の4つを空白でつなぎます。"):
+        strip_move_number("lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b -")
